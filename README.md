@@ -1,3 +1,5 @@
+![alt text](https://github.com/lechatthecat/searchengine_by_rust/blob/main/img.png)
+
 ## How to use this search engine
 At first, change .env for docker-compose and and .env for the search engine app.
 ```
