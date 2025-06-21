@@ -180,8 +180,3 @@ $ docker volume rm $(docker volume ls -q)
 $ docker system prune --force --volumes --all
 ```
 
-Delete volumn
-```shell
-$ docker volume rm programmer_search_engine_db-store
-```
-
