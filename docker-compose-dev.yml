@@ -1,0 +1,56 @@
+services:
+    redis:
+        image: redis:8.0-alpine
+        restart: always
+        ports:
+            - '6379:6379'
+        environment:
+            REDIS_PASSWORD: '${REDIS_PASSWORD}'
+        command: redis-server --loglevel warning --requirepass $REDIS_PASSWORD
+        volumes: 
+            - redis-store:/data
+            - ./logs/redis:/data/log:z
+        container_name: redis
+        # Which network this container belongs to.
+        networks:
+            - app_net_dev
+
+    elasticsearch:
+        image: docker.elastic.co/elasticsearch/elasticsearch:9.0.0
+        container_name: elasticsearch
+        environment:
+            - cluster.name=docker-cluster
+            - discovery.type=single-node
+            - bootstrap.memory_lock=true
+            - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+            - xpack.security.enabled=false
+            - xpack.security.http.ssl.enabled=false
+            - ELASTIC_PASSWORD=${ELASTIC_PASSWORD}  # Set the password from .env
+            - ELASTIC_USERNAME=${ELASTIC_USERNAME}  # Set the username from .env
+            - path.repo=/usr/share/elasticsearch/snapshots
+        ulimits:
+            memlock:
+                soft: -1
+                hard: -1
+        volumes:
+            - ./logs/elastic/search_logs:/var/log/elasticsearch:z
+            - ./logs/elastic/elastic_logs:/usr/share/elasticsearch/logs:z
+            - ./logs/elastic/elastic_var_logs:/usr/local/var/log/elasticsearch  # Bind mount to ensure the directory exists
+            - elastic-db-store:/usr/share/elasticsearch/data:z
+            - ./docker/elasticsearch/sysctl.conf:/etc/sysctl.conf
+            - ./docker/elasticsearch/certs:/usr/share/elasticsearch/config/certs:z
+            - ./docker/elasticsearch/jvm.options:/usr/share/elasticsearch/config/jvm.options:z  # Bind-mount custom jvm.options
+        ports:
+            - 9200:9200
+        networks:
+            - app_net_dev
+
+networks:
+    app_net_dev:
+        driver: "bridge"
+
+volumes:
+    db-store:
+    elastic-db-store:
+    redis-store:
+        driver: local

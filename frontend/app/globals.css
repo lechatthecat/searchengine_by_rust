@@ -1,0 +1,169 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body,
+html {
+  overflow-x: hidden;
+  min-height: 100%;
+}
+
+:root {
+  --foreground-rgb: 0, 0, 0;
+  --background-start-rgb: 214, 219, 220;
+  --background-end-rgb: 255, 255, 255;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --foreground-rgb: 255, 255, 255;
+    --background-start-rgb: 0, 0, 0;
+    --background-end-rgb: 0, 0, 0;
+  }
+}
+
+body {
+  color: rgb(var(--foreground-rgb));
+  background: linear-gradient(to bottom,
+      transparent,
+      rgb(var(--background-end-rgb))) rgb(var(--background-start-rgb));
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+}
+
+textarea:focus,
+input:focus {
+  outline: 0;
+}
+
+.loadingicon,
+.loadingicon-img {
+  display: inline-block;
+}
+
+.loadingicon-img {
+  margin-left: 0.5rem;
+}
+
+.loadingicon-wrapper {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.loadingicon-img {
+  opacity: 0;
+  -moz-animation: cssAnimation 3s;
+  /* Firefox */
+  -webkit-animation: cssAnimation 3s;
+  /* Safari and Chrome */
+  -o-animation: cssAnimation 3s;
+  /* Opera */
+  animation: cssAnimation 3s;
+  -webkit-animation-fill-mode: forwards;
+  animation-fill-mode: forwards;
+}
+
+@keyframes cssAnimation {
+  99% {
+    opacity: 0;
+  }
+
+  100% {
+    opacity: 1;
+  }
+}
+
+@-webkit-keyframes cssAnimation {
+  99% {
+    opacity: 0;
+  }
+
+  100% {
+    opacity: 1;
+  }
+}
+
+.loadingicon {
+  opacity: 0;
+  -moz-animation: cssAnimation 0.5s;
+  /* Firefox */
+  -webkit-animation: cssAnimation 0.5s;
+  /* Safari and Chrome */
+  -o-animation: cssAnimation 0.5s;
+  /* Opera */
+  animation: cssAnimation 0.5s;
+  -webkit-animation-fill-mode: forwards;
+  animation-fill-mode: forwards;
+}
+
+@keyframes cssAnimation {
+  99% {
+    opacity: 0;
+  }
+
+  100% {
+    opacity: 1;
+  }
+}
+
+@-webkit-keyframes cssAnimation {
+  99% {
+    opacity: 0;
+  }
+
+  100% {
+    opacity: 1;
+  }
+}
+
+/* Smartphones (portrait) ----------- */
+@media only screen and (max-width : 320px) {
+  .search-box {
+    margin-top: 9em;
+  }
+
+  .search-input {
+    margin-left: 5px;
+    margin-right: 5px;
+    width: 95%;
+  }
+}
+
+/* Smartphones (landscape) ----------- */
+@media only screen and (min-width : 321px) and (max-width : 768px) {
+  .search-box {
+    margin-top: 9em;
+  }
+
+  .search-input {
+    margin-left: 5px;
+    margin-right: 5px;
+    width: 97%;
+  }
+}
+
+/* iPads ----------- */
+@media only screen and (min-width : 769px) and (max-width : 1024px) {
+  .search-box {
+    margin-top: 12em;
+  }
+}
+
+@media only screen and (min-width : 769px) {
+  .search-box {
+    margin-top: 14em;
+  }
+}
+
+.top-ad {
+  width: auto;
+}
+
+.bottom-ad {
+  width: 100%;
+}

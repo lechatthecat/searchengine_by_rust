@@ -1,0 +1,119 @@
+services:
+    redis:
+        image: redis:8.0-alpine
+        ports:
+            - '6379:6379'
+        environment:
+            REDIS_PASSWORD: '${REDIS_PASSWORD}'
+        command: redis-server --loglevel warning --requirepass $REDIS_PASSWORD
+        volumes: 
+            - redis-store:/data
+            - ./logs/redis:/data/log:z
+        container_name: redis
+        # Which network this container belongs to.
+        networks:
+            - app_net
+        restart: on-failure  # Restart on failure only
+    # Rustコンテナ
+    searchengine:
+        build:
+            context: .
+            dockerfile: ./docker/rust/Dockerfile
+        working_dir: /search
+        environment:
+            - TZ=UTC
+        extra_hosts:
+            - "host.docker.internal:host-gateway"
+        ports:
+            - "8000:8000"
+        volumes:
+            # rust-volumeコンテナのログ保存先
+            - ./logs/search_engine/varlogs:/var/log:z
+            - ./logs/search_engine/logs:/search/log:z
+            - type: bind
+              source: ./search
+              target: /search
+        container_name: searchengine
+        networks:
+            - app_net
+        depends_on:
+            - redis
+            - elasticsearch
+        restart: on-failure  # Restart on failure only
+    # https://gist.github.com/markheath/f246ec3aa5a3e7493991904e241a416a
+    elasticsearch:
+        image: docker.elastic.co/elasticsearch/elasticsearch:9.0.0
+        container_name: elasticsearch
+        environment:
+            - cluster.name=docker-cluster
+            - discovery.type=single-node
+            - bootstrap.memory_lock=true
+            - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+            - xpack.security.enabled=false
+            - xpack.security.http.ssl.enabled=false
+            - ELASTIC_PASSWORD=${ELASTIC_PASSWORD}  # Set the password from .env
+            - ELASTIC_USERNAME=${ELASTIC_USERNAME}  # Set the username from .env
+            - path.repo=/usr/share/elasticsearch/snapshots
+        ulimits:
+            memlock:
+                soft: -1
+                hard: -1
+        deploy:
+            resources:
+                limits:
+                    memory: 1g
+                    cpus: "1.0"
+                reservations:
+                    memory: 512m
+                    cpus: "0.5"
+        volumes:
+            - ./logs/elastic/search_logs:/var/log/elasticsearch:z
+            - ./logs/elastic/elastic_logs:/usr/share/elasticsearch/logs:z
+            - ./logs/elastic/elastic_var_logs:/usr/share/elasticsearch/logs/gc_logs:z   # Bind mount to ensure the directory exists
+            - elastic-db-store:/usr/share/elasticsearch/data:z
+            - ./docker/elasticsearch/sysctl.conf:/etc/sysctl.conf
+            - ./docker/elasticsearch/certs:/usr/share/elasticsearch/config/certs:z
+            - ./docker/elasticsearch/jvm.options:/usr/share/elasticsearch/config/jvm.options:z  # Bind-mount custom jvm.options
+            - ./logs/elastic/elastic_logs:/usr/local/var/log/elasticsearch:z
+        ports:
+            - 9200:9200
+        networks:
+            - app_net
+        user: 1007:1007
+        group_add: 
+            - 0
+        restart: on-failure  # Restart on failure only
+    # nginxコンテナ
+    # Unless we make a nodejs server and nginx redirect requests to the frontend server,
+    # we don't need to have a "frontend" contianer. The frontend code is inside the nginx container.
+    nginx:
+        image: nginx:1.28-alpine
+        depends_on:
+            - searchengine
+        ports:
+            - "80:80"
+            - "443:443"
+        volumes:
+            # 以下の内容をNginxでserveする
+            - ./logs/nginxlog:/var/log/nginx:z
+            - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf:z
+            - ./docker/nginx/nginx.conf:/etc/nginx/nginx.conf:z
+            - type: bind
+              source: ./frontend
+              target: /frontend
+            - type: bind
+              source: ./cache/nginx    # Host directory for cache
+              target: /var/cache/nginx                # Container directory for cache
+        container_name: nginx
+        networks:
+            - app_net
+        restart: on-failure  # Restart on failure only
+networks:
+    app_net:
+        driver: "bridge"
+volumes:
+    db-store:
+    elastic-db-store:
+    redis-store:
+        driver: local
+        
